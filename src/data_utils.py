@@ -84,4 +84,6 @@ def prepare_dialog_data(train_data_dir, dev_data_dir, vocab_size):
     """
     
     vocab_path = os.path.join(DATA_DIR, "data/vocab%d.in" % vocab_size)
-    
+    create_vocab(vocab_path, train_data_dir, vocab_size)
+
+    train_ids_path =  
