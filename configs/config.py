@@ -1,13 +1,13 @@
 import tensorflow as tf
 
-DATA_DIR = '/home/kh/Fun/tf_seq2seq_chatbot/'
+DATA_DIR = '/home/kh/Fun/tf_seq2seq_chatbot/tf_seq2seq_chatbot/'
 
-tf.app.flags.DEFINE_integer('train_data_dir', DATA_DIR+'data/train/movie_lines_cleaned.txt'\
-                            , 'Data directory')
-tf.app.flags.DEFINE_integer('dev_data_dir', DATA_DIR+'data/train/movie_lines_cleaned_10k.txt'\
-                            , 'Data directory')
-tf.app.flags.DEFINE_integer('model_dir', DATA_DIR+'models', 'Model Directory')
-tf.app.flags.DEFINE_integer('results_dir', DATA_DIR+'results', 'Result directory')
+tf.app.flags.DEFINE_string('train_data_dir', DATA_DIR+'data/train/movie_lines_cleaned.txt'\
+							, 'training data directory')
+tf.app.flags.DEFINE_string('dev_data_dir', DATA_DIR+'data/train/movie_lines_cleaned_10k.txt'\
+                            , 'development data directory')
+tf.app.flags.DEFINE_string('model_dir', DATA_DIR+'models', 'Model Directory')
+tf.app.flags.DEFINE_string('results_dir', DATA_DIR+'results', 'Result directory')
 
 tf.app.flags.DEFINE_float('learning_rate', 0.5, 'Learning rate.')
 tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.99, 'Learning rate decays by this much.')

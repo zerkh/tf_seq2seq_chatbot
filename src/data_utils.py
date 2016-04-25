@@ -1,9 +1,11 @@
 """Utilities for processing data"""
 import os
 import re
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from tf_seq2seq_chatbot.configs.config import *
-from configs.config import DATA_DIR
 
 _PAD = "_PAD"
 _GO = "_GO"
@@ -84,7 +86,9 @@ def sentence_to_ids(sentence, vocab_list):
 	words = basic_tokenizer(sentence)
 
 	for word in words:
-		ids.append(vocab_list.get(word, _UNK))
+		ids.append(str(vocab_list.get(word, UNK_ID)))
+
+	return ids
 
 def data_to_ids(ids_path, data_path, vocab_path):
 	"""Convert sentences to tokens.
@@ -100,18 +104,20 @@ def data_to_ids(ids_path, data_path, vocab_path):
 
 	vocab_list = {}
 	with open(vocab_path, "r") as fin:
-		line = fin.readline()
 		idx = 0
-		while line is not None:
+		for line in fin:
 			vocab_list[line.strip()] = idx
 			idx += 1
-			line = fin.readline()
 
 	with open(ids_path, "w") as fout:
 		with open(data_path, "r") as fin:
-			sen = fin.readline()
-			ids = sentence_to_ids(sen, vocab_list)
-			fout.write(ids.join(" ") + "\n")
+			counter = 0
+			for sen in fin:
+				counter += 1
+				if counter % 10000 == 0:
+					print " Processing line %d" % (counter)
+				ids = sentence_to_ids(sen, vocab_list)
+				fout.write(" ".join(ids) + "\n")
 
 def prepare_dialog_data(train_data_dir, dev_data_dir, vocab_size):
 	"""Get dialog data into data_dir, create vocabularies and tokenize data.
@@ -134,3 +140,41 @@ def prepare_dialog_data(train_data_dir, dev_data_dir, vocab_size):
 	dev_ids_path = os.path.join(DATA_DIR, "tmp/dev.ids%d.in" % vocab_size)
 	data_to_ids(train_ids_path, train_data_dir, vocab_path)
 	data_to_ids(dev_ids_path, dev_data_dir, vocab_path)
+
+def read_data(data_path, max_size=None):
+	"""Convert data which is processed to src and tgt
+
+	Args:
+		data_path: path to the files with token-ids.
+		max_size: maximum number of lines to read, all other will be ignored
+
+	Return:
+		data_set:  a list of length len(_buckets); data_set[n] contains a list of
+		(source, target) pairs read from the provided data files that fit
+		into the n-th bucket, i.e., such that len(source) < _buckets[n][0] and
+		len(target) < _buckets[n][1]; source and target are lists of token-ids.
+	"""
+	data_set = [[] for _ in BUCKETS]
+
+	with open(data_path, "r") as fin:
+		last_sen = fin.readline()
+		counter = 0
+		for sen in fin:
+			if counter >= max_size and max_size != None:
+				break
+			counter += 1
+			if counter % 10000 == 0 :
+				print "  reading data line %d" % counter
+				sys.stdout.flush()
+			source_ids = [int(x) for x in last_sen.strip().split()]
+			target_ids = [int(x) for x in sen.strip().split()]
+
+			target_ids.append(EOS_ID)
+
+			for bucket_id, (source_size, target_size) in enumerate(BUCKETS):
+				if len(source_ids) < source_size and len(target_ids) < target_size:
+					data_set.append((source_ids, target_ids))
+					break
+
+			last_sen = sen
+	return data_set
